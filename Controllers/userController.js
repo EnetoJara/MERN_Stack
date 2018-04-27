@@ -5,14 +5,21 @@ const gravatar = require('gravatar')
 const bcryptjs = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const config = require('../Config/keys')
+const validatorRegisterInput = require('../Validations/register')
+const validatorLoginInput = require('../Validations/login')
 
 function test (req, res) {
   return res.json({ message: 'users works' })
 }
 
 function register (req, res) {
+  const { errors, isValid } = validatorRegisterInput(req.body)
+  if (!isValid) return res.status(400).json(errors)
   User.findOne({ email: req.body.email }).then(stored => {
-    if (stored) return res.status(400).json({ message: 'User Already exits!' })
+    if (stored) {
+      errors.email = 'User Already exists'
+      return res.status(400).json(errors)
+    }
     const avatar = gravatar.url(req.body.email, { s: '200', r: 'pg', d: 'dd' })
     const newUser = new User({
       name: req.body.name,
@@ -33,16 +40,24 @@ function register (req, res) {
 }
 
 function logIn (req, res) {
+  const { errors, isValid } = validatorLoginInput(req.body)
+  if (!isValid) return res.status(400).json(errors)
   const email = req.body.email
   const password = req.body.password
   User.findOne({ email: email }).then(stored => {
-    if (!stored) return res.status(404).json({ email: 'User Not Found' })
+    if (!stored) {
+      errors.email = 'User Not Found'
+      return res.status(404).json(errors)
+    }
     bcryptjs.compare(password, stored.password).then(isMatch => {
-      if (!isMatch) return res.status(400).json({ psswrd: 'Invalid Password' })
+      if (!isMatch) {
+        errors.password = 'Invalid Password'
+        return res.status(400).json(errors)
+      }
       const payload = { id: stored.id, name: stored.name, avatar: stored.avatar }
       jwt.sign(payload, config.secretKey, { expiresIn: 4600 }, (err2, token) => {
         if (err2) return res.status(500).json({ message: 'ERROR GETTING TOKEN' })
-        else return res.json({ success: true, token: token })
+        else return res.json({ token: 'Bearer ' + token })
       })
     })
   }).catch(err => res.status(500).json({ message: err }))
