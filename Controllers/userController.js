@@ -5,6 +5,7 @@ const gravatar = require('gravatar')
 const bcryptjs = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const config = require('../Config/keys')
+
 function test (req, res) {
   return res.json({ message: 'users works' })
 }
@@ -46,7 +47,6 @@ function logIn (req, res) {
     })
   }).catch(err => res.status(500).json({ message: err }))
 }
-
 
 module.exports = {
   test, register, logIn
