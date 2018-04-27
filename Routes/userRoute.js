@@ -2,9 +2,9 @@
 
 const api = require('express').Router()
 const controller = require('../Controllers/userController')
-// here is where we are going to put the middleware
+const passport = require('passport')
 
-api.get('/test', controller.test)
+api.get('/test',[ passport.authenticate('jwt', ({ session: false })) ],  controller.test)
 api.post('/register', controller.register)
 api.post('/login', controller.logIn)
 
